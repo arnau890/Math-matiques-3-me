@@ -133,13 +133,7 @@
     .graph .point circle { cursor: help; }
     .graph .point circle.draggable-point { fill: #2563eb; stroke: white; stroke-width: 1.5; cursor: grab; touch-action: none; }
     .graph .point circle.draggable-point.dragging { cursor: grabbing; }
-    .quiz { margin-top: 1rem; padding: 1rem; background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; }
-    .quiz label { display: block; margin: .5rem 0 .25rem; font-weight: 650; }
-    .quiz input { width: 9rem; padding: .45rem .6rem; border: 1px solid #94a3b8; border-radius: 6px; font: inherit; }
-    .quiz button { margin-left: .4rem; padding: .45rem .8rem; color: white; background: var(--blue-dark); border: 0; border-radius: 6px; font: inherit; cursor: pointer; }
-    .quiz button:hover { background: var(--blue); }
-    .quiz-feedback { min-height: 1.6em; margin-top: .5rem; font-weight: 650; }
-    .trace-controls { margin-top: .7rem; }
+     .trace-controls { margin-top: .7rem; }
     .trace-button { padding: .5rem .85rem; color: #fff; background: var(--blue-dark); border: 0; border-radius: 6px; font: inherit; cursor: pointer; }
     .trace-button:hover { background: var(--blue); }
     #tableau table td.active-value-cell { background: #fef3c7; box-shadow: inset 0 0 0 2px #f59e0b; }
@@ -348,19 +342,7 @@
         <p class="note">Fais glisser le point bleu sur la courbe, ou utilise les flèches du clavier, pour lire ses coordonnées.</p>
       </section>
 
-      <section class="card" id="quiz-fonctions">
-        <h2>À toi de jouer — Calculer une image</h2>
-        <div class="quiz">
-          <p>Pour la fonction \(f(x)=x^2-4\), calcule \(f(3)\).</p>
-          <form id="quiz-form">
-            <label for="quiz-answer">Ta réponse :</label>
-            <input id="quiz-answer" name="answer" type="text" inputmode="decimal" autocomplete="off" aria-describedby="quiz-feedback">
-            <button type="submit">Vérifier</button>
-          </form>
-          <p id="quiz-feedback" class="quiz-feedback" role="status" aria-live="polite"></p>
-        </div>
-      </section>
-    </main>
+      </main>
 
     <aside class="ai-panel" aria-label="Agent IA pour le cours">
       <h2>Besoin d’un coup de pouce</h2>
@@ -479,19 +461,6 @@
         }
       });
 
-      const quiz = document.getElementById("quiz-form");
-      const answer = document.getElementById("quiz-answer");
-      const feedback = document.getElementById("quiz-feedback");
-      quiz.addEventListener("submit", (event) => {
-        event.preventDefault();
-        const value = answer.value.trim().replace(",", ".");
-        if (value !== "" && Number.isFinite(Number(value)) && Number(value) === 5) {
-          feedback.textContent = "Bravo ! f(3)=3²−4=9−4=5.";
-        } else {
-          feedback.textContent = "Pas tout à fait. f(3)=3²−4=9−4=5.";
-        }
-      });
-
       const traceButton = document.getElementById("trace-values-button");
       const graphPanel = document.getElementById("table-graph-panel");
       const projections = document.getElementById("table-projections");
@@ -547,12 +516,21 @@
           marker.setAttribute("r", "5"); marker.setAttribute("class", "plotted-point");
           marker.setAttribute("aria-label", "Point (" + point.x + ";" + point.y + ")");
           plottedPoints.appendChild(marker);
-          await wait(700);
+          await wait(1400);
         }
         if (run !== traceRun) return;
         valueRows.forEach((row) => row.querySelectorAll(".active-value-cell").forEach((cell) => cell.classList.remove("active-value-cell")));
-        const curvePoints = values.map((point) => (180 + 45 * point.x) + "," + (150 - 25 * point.y)).join(" ");
-        valueCurve.setAttribute("d", "M" + curvePoints.replace(/ /g, " L"));
+        const plotted = values.map((point) => ({x:180 + 45 * point.x,y:150 - 25 * point.y}));
+        let smoothPath = "M" + plotted[0].x + "," + plotted[0].y;
+        for (let index = 0; index < plotted.length - 1; index += 1) {
+          const current = plotted[index];
+          const next = plotted[index + 1];
+          const middleX = (current.x + next.x) / 2;
+          smoothPath += " Q" + current.x + "," + current.y + " " + middleX + "," + ((current.y + next.y) / 2);
+        }
+        const last = plotted[plotted.length - 1];
+        smoothPath += " T" + last.x + "," + last.y;
+        valueCurve.setAttribute("d", smoothPath);
         requestAnimationFrame(() => valueCurve.classList.add("drawn"));
       });
     });
