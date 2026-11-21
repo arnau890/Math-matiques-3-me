@@ -138,7 +138,7 @@
     .trace-button:hover { background: var(--blue); }
     #tableau table td.active-value-cell { background: #fef3c7; box-shadow: inset 0 0 0 2px #f59e0b; }
     .table-graph-panel { margin-top: .8rem; padding: .75rem; background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; text-align: center; }
-    .table-value-graph { display: block; width: 100%; max-width: 540px; height: auto; margin: 0 auto; }
+    .table-value-graph { display: block; width: 100%; max-width: 360px; height: auto; margin: 0 auto; }
     .table-value-graph text { fill: #475569; font: 12px system-ui, sans-serif; }
     .table-value-graph .value-grid { stroke: #e2e8f0; stroke-width: 1; }
     .table-value-graph .value-axis { stroke: #334155; stroke-width: 1.6; }
@@ -516,7 +516,7 @@
           marker.setAttribute("r", "5"); marker.setAttribute("class", "plotted-point");
           marker.setAttribute("aria-label", "Point (" + point.x + ";" + point.y + ")");
           plottedPoints.appendChild(marker);
-          await wait(2500);
+          await wait(4000);
         }
         if (run !== traceRun) return;
         valueRows.forEach((row) => row.querySelectorAll(".active-value-cell").forEach((cell) => cell.classList.remove("active-value-cell")));
