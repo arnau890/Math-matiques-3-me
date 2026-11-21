@@ -144,7 +144,7 @@
     .table-value-graph .value-axis { stroke: #334155; stroke-width: 1.6; }
     .table-value-graph .projection { stroke: #2563eb; stroke-width: 1.5; stroke-dasharray: 3 4; }
     .table-value-graph .plotted-point { fill: #ea580c; stroke: #fff; stroke-width: 1.5; animation: point-appear .3s ease-out both; }
-    .table-value-graph .value-curve { fill: none; stroke: #ea580c; stroke-width: 2.5; stroke-dasharray: 500; stroke-dashoffset: 500; }
+    .table-value-graph .value-curve { fill: none; stroke: #2563eb; stroke-width: 2.5; stroke-dasharray: 500; stroke-dashoffset: 500; pointer-events: none; }
     .table-value-graph .value-curve.drawn { stroke-dashoffset: 0; transition: stroke-dashoffset 1.3s ease; }
     @keyframes point-appear { from { opacity: 0; transform: scale(.2); transform-box: fill-box; transform-origin: center; } to { opacity: 1; transform: scale(1); } }
     @media (prefers-reduced-motion: reduce) { .table-value-graph .plotted-point { animation-duration: .01ms; } .table-value-graph .value-curve.drawn { transition-duration: .01ms; } }
@@ -289,8 +289,8 @@
               </g>
             </g>
             <g id="table-projections" aria-hidden="true"></g>
-            <path id="table-value-curve" class="value-curve" aria-hidden="true"></path>
             <g id="table-plotted-points" aria-hidden="true"></g>
+            <path id="table-value-curve" class="value-curve" aria-hidden="true"></path>
           </svg>
         </div>
         <ul>
@@ -516,7 +516,7 @@
           marker.setAttribute("r", "5"); marker.setAttribute("class", "plotted-point");
           marker.setAttribute("aria-label", "Point (" + point.x + ";" + point.y + ")");
           plottedPoints.appendChild(marker);
-          await wait(1400);
+          await wait(2500);
         }
         if (run !== traceRun) return;
         valueRows.forEach((row) => row.querySelectorAll(".active-value-cell").forEach((cell) => cell.classList.remove("active-value-cell")));
