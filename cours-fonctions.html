@@ -523,13 +523,16 @@
         const plotted = values.map((point) => ({x:180 + 45 * point.x,y:150 - 25 * point.y}));
         let smoothPath = "M" + plotted[0].x + "," + plotted[0].y;
         for (let index = 0; index < plotted.length - 1; index += 1) {
+          const previous = plotted[Math.max(0, index - 1)];
           const current = plotted[index];
           const next = plotted[index + 1];
-          const middleX = (current.x + next.x) / 2;
-          smoothPath += " Q" + current.x + "," + current.y + " " + middleX + "," + ((current.y + next.y) / 2);
+          const following = plotted[Math.min(plotted.length - 1, index + 2)];
+          const control1X = current.x + (next.x - previous.x) / 6;
+          const control1Y = current.y + (next.y - previous.y) / 6;
+          const control2X = next.x - (following.x - current.x) / 6;
+          const control2Y = next.y - (following.y - current.y) / 6;
+          smoothPath += " C" + control1X + "," + control1Y + " " + control2X + "," + control2Y + " " + next.x + "," + next.y;
         }
-        const last = plotted[plotted.length - 1];
-        smoothPath += " T" + last.x + "," + last.y;
         valueCurve.setAttribute("d", smoothPath);
         requestAnimationFrame(() => valueCurve.classList.add("drawn"));
       });
