@@ -139,6 +139,21 @@
     .quiz button { margin-left: .4rem; padding: .45rem .8rem; color: white; background: var(--blue-dark); border: 0; border-radius: 6px; font: inherit; cursor: pointer; }
     .quiz button:hover { background: var(--blue); }
     .quiz-feedback { min-height: 1.6em; margin-top: .5rem; font-weight: 650; }
+    .trace-controls { margin-top: .7rem; }
+    .trace-button { padding: .5rem .85rem; color: #fff; background: var(--blue-dark); border: 0; border-radius: 6px; font: inherit; cursor: pointer; }
+    .trace-button:hover { background: var(--blue); }
+    #tableau table td.active-value-cell { background: #fef3c7; box-shadow: inset 0 0 0 2px #f59e0b; }
+    .table-graph-panel { margin-top: .8rem; padding: .75rem; background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; text-align: center; }
+    .table-value-graph { display: block; width: 100%; max-width: 540px; height: auto; margin: 0 auto; }
+    .table-value-graph text { fill: #475569; font: 12px system-ui, sans-serif; }
+    .table-value-graph .value-grid { stroke: #e2e8f0; stroke-width: 1; }
+    .table-value-graph .value-axis { stroke: #334155; stroke-width: 1.6; }
+    .table-value-graph .projection { stroke: #2563eb; stroke-width: 1.5; stroke-dasharray: 3 4; }
+    .table-value-graph .plotted-point { fill: #ea580c; stroke: #fff; stroke-width: 1.5; animation: point-appear .3s ease-out both; }
+    .table-value-graph .value-curve { fill: none; stroke: #ea580c; stroke-width: 2.5; stroke-dasharray: 500; stroke-dashoffset: 500; }
+    .table-value-graph .value-curve.drawn { stroke-dashoffset: 0; transition: stroke-dashoffset 1.3s ease; }
+    @keyframes point-appear { from { opacity: 0; transform: scale(.2); transform-box: fill-box; transform-origin: center; } to { opacity: 1; transform: scale(1); } }
+    @media (prefers-reduced-motion: reduce) { .table-value-graph .plotted-point { animation-duration: .01ms; } .table-value-graph .value-curve.drawn { transition-duration: .01ms; } }
     .graph .point circle:focus-visible { stroke: #0f172a; stroke-width: 1.5; outline: none; }
     .graph-tooltip {
       position: absolute;
@@ -263,6 +278,27 @@
             <tr><th scope="row">\(g(x)\)</th><td>1</td><td>2</td><td>1</td><td>−4</td><td>3</td></tr>
           </tbody>
         </table>
+        <div class="trace-controls">
+          <button id="trace-values-button" class="trace-button" type="button" aria-expanded="false" aria-controls="table-graph-panel">Tracer la courbe</button>
+        </div>
+        <div id="table-graph-panel" class="table-graph-panel" hidden>
+          <p class="note">Les points du tableau sont placés dans le repère, puis reliés dans l’ordre des abscisses.</p>
+          <svg class="table-value-graph" viewBox="0 0 360 300" role="img" aria-labelledby="table-graph-title">
+            <title id="table-graph-title">Représentation graphique des valeurs de la fonction g</title>
+            <g aria-hidden="true">
+              <path class="value-grid" d="M45 25V275 M90 25V275 M135 25V275 M180 25V275 M225 25V275 M270 25V275 M315 25V275 M45 25H315 M45 50H315 M45 75H315 M45 100H315 M45 125H315 M45 150H315 M45 175H315 M45 200H315 M45 225H315 M45 250H315 M45 275H315" />
+              <path class="value-axis" d="M25 150H340 M180 280V15" />
+              <g class="value-labels">
+                <text x="39" y="169">−3</text><text x="84" y="169">−2</text><text x="129" y="169">−1</text><text x="176" y="169">0</text><text x="220" y="169">1</text><text x="265" y="169">2</text><text x="310" y="169">3</text>
+                <text x="185" y="54">4</text><text x="185" y="104">2</text><text x="185" y="204">−2</text><text x="185" y="254">−4</text>
+                <text x="326" y="143">x</text><text x="187" y="17">g(x)</text>
+              </g>
+            </g>
+            <g id="table-projections" aria-hidden="true"></g>
+            <path id="table-value-curve" class="value-curve" aria-hidden="true"></path>
+            <g id="table-plotted-points" aria-hidden="true"></g>
+          </svg>
+        </div>
         <ul>
           <li>L’image de 2 est 3, c’est-à-dire \(g(2)=3\).</li>
           <li>1 a deux antécédents par (g) : (-2) et 0, car \(g(-2)=g(0)=1\).</li>
@@ -454,6 +490,70 @@
         } else {
           feedback.textContent = "Pas tout à fait. f(3)=3²−4=9−4=5.";
         }
+      });
+
+      const traceButton = document.getElementById("trace-values-button");
+      const graphPanel = document.getElementById("table-graph-panel");
+      const projections = document.getElementById("table-projections");
+      const plottedPoints = document.getElementById("table-plotted-points");
+      const valueCurve = document.getElementById("table-value-curve");
+      const valueRows = document.querySelectorAll("#tableau table tr");
+      const values = [{x:-2,y:1},{x:-1,y:2},{x:0,y:1},{x:1,y:-4},{x:2,y:3}];
+      const svgNamespace = "http://www.w3.org/2000/svg";
+      let traceRun = 0;
+      const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+      const clearTrace = () => {
+        traceRun += 1;
+        graphPanel.hidden = true;
+        traceButton.textContent = "Tracer la courbe";
+        traceButton.setAttribute("aria-expanded", "false");
+        projections.replaceChildren();
+        plottedPoints.replaceChildren();
+        valueCurve.removeAttribute("d");
+        valueCurve.classList.remove("drawn");
+        valueRows.forEach((row) => row.querySelectorAll(".active-value-cell").forEach((cell) => cell.classList.remove("active-value-cell")));
+      };
+      traceButton.addEventListener("click", async () => {
+        if (!graphPanel.hidden) {
+          clearTrace();
+          return;
+        }
+        const run = ++traceRun;
+        graphPanel.hidden = false;
+        traceButton.textContent = "Effacer le repère";
+        traceButton.setAttribute("aria-expanded", "true");
+        projections.replaceChildren();
+        plottedPoints.replaceChildren();
+        valueCurve.removeAttribute("d");
+        valueCurve.classList.remove("drawn");
+        for (let index = 0; index < values.length; index += 1) {
+          if (run !== traceRun) return;
+          valueRows.forEach((row) => row.querySelectorAll(".active-value-cell").forEach((cell) => cell.classList.remove("active-value-cell")));
+          valueRows.forEach((row) => row.children[index + 1].classList.add("active-value-cell"));
+          const point = values[index];
+          const px = 180 + 45 * point.x;
+          const py = 150 - 25 * point.y;
+          const vertical = document.createElementNS(svgNamespace, "line");
+          vertical.setAttribute("x1", String(px)); vertical.setAttribute("y1", "150");
+          vertical.setAttribute("x2", String(px)); vertical.setAttribute("y2", String(py));
+          vertical.setAttribute("class", "projection");
+          const horizontal = document.createElementNS(svgNamespace, "line");
+          horizontal.setAttribute("x1", "180"); horizontal.setAttribute("y1", String(py));
+          horizontal.setAttribute("x2", String(px)); horizontal.setAttribute("y2", String(py));
+          horizontal.setAttribute("class", "projection");
+          projections.append(vertical, horizontal);
+          const marker = document.createElementNS(svgNamespace, "circle");
+          marker.setAttribute("cx", String(px)); marker.setAttribute("cy", String(py));
+          marker.setAttribute("r", "5"); marker.setAttribute("class", "plotted-point");
+          marker.setAttribute("aria-label", "Point (" + point.x + ";" + point.y + ")");
+          plottedPoints.appendChild(marker);
+          await wait(700);
+        }
+        if (run !== traceRun) return;
+        valueRows.forEach((row) => row.querySelectorAll(".active-value-cell").forEach((cell) => cell.classList.remove("active-value-cell")));
+        const curvePoints = values.map((point) => (180 + 45 * point.x) + "," + (150 - 25 * point.y)).join(" ");
+        valueCurve.setAttribute("d", "M" + curvePoints.replace(/ /g, " L"));
+        requestAnimationFrame(() => valueCurve.classList.add("drawn"));
       });
     });
   </script>
